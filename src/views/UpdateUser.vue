@@ -18,7 +18,7 @@
           </tr>
         </tbody>
       </table>
-      <button class="btn" @click="edit = true">Изменить данные</button>
+      <button class="btn" @click="getUSER">Изменить данные</button>
     </div>
     <form v-if="edit" class="form" @submit.prevent="updateUser">
       <label>
@@ -54,8 +54,8 @@
 </template>
   
   <script>
-import { PATCH } from "@/api/http";
 import name_emailValid from "@/mixins/name_emailValid";
+import axios from "axios";
 
 export default {
   mixins: [name_emailValid],
@@ -68,10 +68,11 @@ export default {
       phone: "",
       x_action_id: "",
       edit: false,
+      baseURL: "https://api.sitemap-generator.ru/test-api/user"
     };
   },
   mounted() {
-    this.getUSER();
+    this.getUser();
   },
   computed: {
     disBtn() {
@@ -82,14 +83,34 @@ export default {
     },
   },
   methods: {
+    async getUser() {
+      this.edit = false;
+
+      const headers = {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${this.$store.state.auth_key}`,
+      };
+
+      await axios
+        .get(this.baseURL, { headers })
+        .then((response) => {
+          this.getResult = response.data;
+          localStorage.setItem("usersList", JSON.stringify(response.data));
+          let usersList = localStorage.getItem("usersList");
+          if (usersList) {
+            this.getResult = JSON.parse(usersList);
+            this.name = this.getResult.name;
+            this.email = this.getResult.email;
+            this.phone = this.getResult.phone;
+          }
+        })
+        .catch((error) => {
+          console.log(error.toJSON());
+        });
+    },
+
     getUSER() {
-      let usersList = localStorage.getItem("usersList");
-      if (usersList) {
-        this.getResult = JSON.parse(usersList);
-        this.name = this.getResult.name;
-        this.email = this.getResult.email;
-        this.phone = this.getResult.phone;
-      }
+      this.edit = true;
     },
 
     async updateUser() {
@@ -99,23 +120,34 @@ export default {
         phone: this.phone,
       };
 
-      await PATCH.patch(`user`, user)
+      const headers = {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${this.$store.state.auth_key}`,
+      };
+
+      await axios
+        .patch(this.baseURL, user, {
+          headers,
+        })
         .then((response) => {
-          this.getResult = response.data;
           localStorage.setItem("usersList", JSON.stringify(response.data));
+
           this.x_action_id = response.headers;
+
           this.edit = false;
         })
         .catch((error) => {
           this.errors = true;
+
           console.log(error.toJSON());
+
           this.errors = error.toJSON();
+
           setTimeout(() => {
             this.errors = false;
             this.edit = false;
             this.getUSER();
           }, 1500);
-          console.log(this.errors);
         });
     },
   },

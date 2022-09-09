@@ -22,8 +22,8 @@
 </template>
 
 <script>
-import { POST } from "@/api/http";
 import name_emailValid from "@/mixins/name_emailValid";
+import axios from "axios";
 
 export default {
   mixins: [name_emailValid],
@@ -31,8 +31,9 @@ export default {
     return {
       name: "",
       email: "",
-      getResult: [],
       errors: false,
+      x_application_token: "wefiEFv_dwDEvf-12Veda_feadvkJbBgh831",
+      baseURL: 'https://api.sitemap-generator.ru/test-api/user',
     };
   },
   computed: {
@@ -51,21 +52,23 @@ export default {
         phone: "",
       };
 
-      await POST.post(`user`, user)
+      const headers = {
+        "Content-type": "application/json",
+        "X-Application-Token": this.x_application_token,
+      };
+
+      await axios.post(this.baseURL, user, { headers })
         .then((response) => {
-          this.getResult = response.data;
+          console.log(response.data.auth_key);
+          this.$store.state.auth_key = response.data.auth_key;
           localStorage.setItem("usersList", JSON.stringify(response.data));
           this.$router.push("/update");
         })
         .catch((error) => {
-          this.errors = true
+          this.errors = true;
           console.log(error.toJSON());
-          this.errors = error.toJSON()
-          console.log(this.errors)
+          this.errors = error.toJSON();
         });
-
-      this.name = "";
-      this.email = "";
     },
   },
 };
