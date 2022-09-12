@@ -1,5 +1,6 @@
 <template>
   <div>
+    {{ $store.state.auth_key }}
     <h1>UpdateUser</h1>
     <div class="user_data" v-if="!edit">
       <table>
@@ -68,7 +69,7 @@ export default {
       phone: "",
       x_action_id: "",
       edit: false,
-      baseURL: "https://api.sitemap-generator.ru/test-api/user"
+      baseURL: "https://api.sitemap-generator.ru/test-api/user",
     };
   },
   mounted() {
@@ -114,6 +115,25 @@ export default {
     },
 
     async updateUser() {
+      // axios.interceptors.response.use(
+      //   (res) => {
+      //     return res;
+      //   },
+      //   async (error) => {
+      //     if (error.response) {
+      //       if (error.response.status === 401) {
+      //         // Do something, call refreshToken() request for example;
+      //         // return a request
+      //         return axios_instance(config);
+      //       }
+      //       if (error.response.status === ANOTHER_STATUS_CODE) {
+      //         // Do something
+      //         return Promise.reject(error.response.data);
+      //       }
+      //     }
+      //     return Promise.reject(error);
+      //   }
+      // );
       const user = {
         name: this.name,
         email: this.email,
@@ -125,30 +145,54 @@ export default {
         Authorization: `Bearer ${this.$store.state.auth_key}`,
       };
 
-      await axios
-        .patch(this.baseURL, user, {
+      try {
+        let res = await axios.patch(this.baseURL, user, {
           headers,
-        })
-        .then((response) => {
-          localStorage.setItem("usersList", JSON.stringify(response.data));
-
-          this.x_action_id = response.headers;
-
-          this.edit = false;
-        })
-        .catch((error) => {
-          this.errors = true;
-
-          console.log(error.toJSON());
-
-          this.errors = error.toJSON();
-
-          setTimeout(() => {
-            this.errors = false;
-            this.edit = false;
-            this.getUSER();
-          }, 1500);
         });
+
+        localStorage.setItem("usersList", JSON.stringify(res.data));
+
+        this.x_action_id = res.headers;
+
+        this.edit = false;
+      } catch (error) {
+        this.errors = true;
+
+        console.log(error.toJSON());
+
+        this.errors = error.toJSON();
+
+        setTimeout(() => {
+          this.errors = false;
+          this.edit = false;
+          this.getUSER();
+        }, 1500);
+      }
+
+      // await axios
+      //   .patch(this.baseURL, user, {
+      //     headers,
+      //   })
+      //   .then((response) => {
+      //     localStorage.setItem("usersList", JSON.stringify(response.data));
+
+      //     this.x_action_id = response.headers;
+
+      //     this.edit = false;
+      //   })
+      //   .catch((error) => {
+      //     this.errors = true;
+
+      //     console.log(error.toJSON());
+
+      //     this.errors = error.toJSON();
+
+      //     setTimeout(() => {
+      //       this.errors = false;
+      //       this.edit = false;
+      //       this.getUSER();
+      //     }, 1500);
+      //   });
     },
   },
 };
